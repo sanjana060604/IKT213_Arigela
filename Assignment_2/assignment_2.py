@@ -1,136 +1,137 @@
 import cv2
 import numpy as np
-import os
+img = cv2.imread("C:/Users/Sanjana/Downloads/lena-2.png")
+h, w, c = img.shape
 
-def save_image(image, original_path, suffix):
-    folder = os.path.dirname(original_path)
-    base = os.path.basename(original_path)
-    name, ext = os.path.splitext(base)
-    out_path = os.path.join(folder, f"{name}_{suffix}{ext or '.png'}")
-    cv2.imwrite(out_path, image)
-    print(f"Saved: {out_path}")
-
-
-def padding(image, border_width):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
-    padded = cv2.copyMakeBorder(img, border_width, border_width, border_width, border_width,
-                                borderType=cv2.BORDER_REFLECT)
-    save_image(padded, image, "padded")
+#Task 1 Padding
+def padding(image, w):
+    # the task of adding border
+    padded_image = cv2.copyMakeBorder(image,w,w,w,w,cv2.BORDER_REFLECT)
+    #Saving it
+    cv2.imwrite("padded_image.jpg", padded_image)
+    return padded_image
 
 
-def crop(image, x0, x1, y0, y1):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
-    h, w = img.shape[:2]
-    cropped = img[y0:h-y1, x0:w-x1]
-    save_image(cropped, image, "cropped")
+output1 = padding(img, 100)
+
+#Task 2 Cropping
+
+def crop(image, l,r,t,b):
+    # cropping
+    cropped_image = image[t:b, l:r]
+    # Saving
+    cv2.imwrite("cropped_image.jpg", cropped_image)
+    return cropped_image
 
 
-def resize(image, width, height):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
-    resized = cv2.resize(img, (width, height))
-    save_image(resized, image, "resized")
+# Cropping values
+l = 80
+t = 80
+r = w - 130
+b = h - 130
+output2 = crop(img,l,r,t,b)
+
+#Task 3 Resizing
+
+def resize(image, w, h):
+    # Resize the image
+    resized_image = cv2.resize(image, (w, h))
+
+    # Save the resized image
+    cv2.imwrite("resized_image.jpg", resized_image)
+    return resized_image
+
+# Resize to 200x200
+output3 = resize(img, 200, 200)
+
+#Task 4 Manual Copy
 
 
-def copy(image, emptyPictureArray):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
-    h, w, c = img.shape
+def copy(image, emptypicturearray):
+
+    # Manually copy pixel values
     for i in range(h):
         for j in range(w):
-            emptyPictureArray[i, j] = img[i, j]
-    save_image(emptyPictureArray, image, "copied")
+            for k in range(c):
+                emptypicturearray[i, j, k] = image[i, j, k]
 
+    # Save the copied image
+    cv2.imwrite("copied_image.jpg", emptypicturearray)
+    return emptypicturearray
 
+# Create empty array
+emptypicturearray = np.zeros((h, w, 3), dtype=np.uint8)
+
+# Copy pixels
+output4 = copy(img, emptypicturearray)
+
+#Task 5 Grayscaling
 def grayscale(image):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    save_image(gray, image, "grayscale")
+    # Convert to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Save the grayscale image
+    cv2.imwrite("grayscale_image.jpg", gray)
+    return gray
 
+output5 = grayscale(img)
 
+#Task 6 RGB to HSV
 def hsv(image):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
-    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    save_image(hsv_img, image, "hsv")
+    # Convert to grayscale
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    # Save the grayscale image
+    cv2.imwrite("hsv_image.jpg", hsv)
+    return hsv
 
+output6 = hsv(img)
+
+#Task 7 Shifting Colour
 
 def hue_shifted(image, emptyPictureArray, hue):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
 
-    hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    hsv_img[:, :, 0] = (hsv_img[:, :, 0].astype(int) + hue) % 180  # Hue range is 0–179
-    shifted_bgr = cv2.cvtColor(hsv_img, cv2.COLOR_HSV2BGR)
+    for i in range(h):
+        for j in range(w):
+            for k in range(c):
+                new_val = image[i, j, k] + hue
+                # To avoid values that are not defined we clip over 255 and below 0
+                emptyPictureArray[i, j, k] = np.clip(new_val, 0, 255)
 
-    save_image(shifted_bgr, image, "hue_shifted")
+    # Save the shifted image
+    cv2.imwrite("hue_shifted.jpg", emptyPictureArray)
+    return emptyPictureArray
 
+emptyPictureArray = np.zeros((h, w, 3), dtype=np.uint8)
+output7 = hue_shifted(img, emptyPictureArray, 50)
+
+#Task 8 Smoothing using gaussian blur
 
 def smoothing(image):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
-    blurred = cv2.GaussianBlur(img, (15, 15), 0)
-    save_image(blurred, image, "smoothed")
+    # Apply Gaussian blur with kernel size (15,15)
+    smooth_image = cv2.GaussianBlur(image, (15, 15), 0, borderType=cv2.BORDER_DEFAULT)
+    # Save the smoothed image
+    cv2.imwrite("smoothed_image.jpg", smooth_image)
+    return smooth_image
 
+output8 = smoothing(img)
 
-def rotation(image, rotation_angle):
-    img = cv2.imread(image)
-    if img is None:
-        print("Error: Could not load image")
-        return
+#Task 9 Rotation
 
-    if rotation_angle == 90:
-        rotated = cv2.rotate(img, cv2.ROTATE_90_CLOCKWISE)
-    elif rotation_angle == 180:
-        rotated = cv2.rotate(img, cv2.ROTATE_180)
+def rotation(image, angle):
+    if angle == 90:
+
+        rotated_image = cv2.rotate(image, cv2.ROTATE_90_CLOCKWISE)
+        cv2.imwrite("rotated_image_90.jpg", rotated_image)
+    elif angle == 180:
+
+        rotated_image = cv2.rotate(image, cv2.ROTATE_180)
+        cv2.imwrite("rotated_image_180.jpg", rotated_image)
     else:
-        print("Rotation angle must be 90 or 180")
-        return
-    save_image(rotated, image, f"rotated_{rotation_angle}")
+
+        rotated_image = image
 
 
-if __name__ == "__main__":
+    return rotated_image
 
-    image_path = r"C:\Users\Sanjana\Downloads\lena-2.png"
 
-    padding(image_path, 100)
-
-    crop(image_path, 80, 130, 80, 130)
-
-    resize(image_path, 200, 200)
-
-    img = cv2.imread(image_path)
-    h, w, c = img.shape
-    empty = np.zeros((h, w, c), dtype=np.uint8)
-    copy(image_path, empty)
-
-    grayscale(image_path)
-
-    hsv(image_path)
-
-    empty2 = np.zeros((h, w, c), dtype=np.uint8)
-    hue_shifted(image_path, empty2, 50)
-
-    smoothing(image_path)
-
-    rotation(image_path, 90)
-    rotation(image_path, 180)
+output9a = rotation(img, 90)
+output9b = rotation(img, 180)
